@@ -1,13 +1,14 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\ClientBookingController;
 use App\Models\Airport;
+
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\FlightController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ClientBookingController;
 
 /*
 |--------------------------------------------------------------------------
@@ -16,13 +17,16 @@ use App\Http\Controllers\ProfileController;
 */
 
 Route::get('/', function () {
+
     $airports = Airport::where('is_active', true)
         ->orderBy('city')
         ->orderBy('name')
         ->get();
 
     return view('welcome', compact('airports'));
+
 })->name('home');
+
 
 /*
 |--------------------------------------------------------------------------
@@ -33,6 +37,7 @@ Route::get('/', function () {
 Route::get('/flights', [FlightController::class, 'index'])
     ->name('flights.index');
 
+
 /*
 |--------------------------------------------------------------------------
 | Catégories
@@ -41,6 +46,7 @@ Route::get('/flights', [FlightController::class, 'index'])
 
 Route::resource('categories', CategoryController::class);
 
+
 /*
 |--------------------------------------------------------------------------
 | Tableau de bord
@@ -48,16 +54,26 @@ Route::resource('categories', CategoryController::class);
 */
 
 Route::get('/dashboard', function () {
+
     return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+
+})->middleware(['auth', 'verified'])
+  ->name('dashboard');
+
 
 /*
 |--------------------------------------------------------------------------
-| Profil utilisateur
+| Espace client
 |--------------------------------------------------------------------------
 */
 
 Route::middleware('auth')->group(function () {
+
+    /*
+    |--------------------------------------------------------------------------
+    | Profil
+    |--------------------------------------------------------------------------
+    */
 
     Route::get('/profile', [ProfileController::class, 'edit'])
         ->name('profile.edit');
@@ -66,34 +82,27 @@ Route::middleware('auth')->group(function () {
         ->name('profile.update');
 
     Route::delete('/profile', [ProfileController::class, 'destroy'])
-    ->name('profile.destroy');
+        ->name('profile.destroy');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Mes réservations
+    |--------------------------------------------------------------------------
+    */
+
     Route::get('/mes-reservations', [ClientBookingController::class, 'index'])
-    ->name('bookings.index');
+        ->name('bookings.index');
 
     Route::get('/mes-reservations/{booking}', [ClientBookingController::class, 'show'])
-    ->name('bookings.show');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])
-        ->name('profile.destroy');
-        Route::get('/flights/{flight}/booking', [BookingController::class, 'create'])
-        ->name('bookings.create');
+        ->name('bookings.show');
 
-    Route::post('/flights/{flight}/booking', [BookingController::class, 'store'])
-        ->name('bookings.store');
 
-    Route::get('/bookings/{booking}/payment', [PaymentController::class, 'create'])
-        ->name('payments.create');
-
-    Route::post('/bookings/{booking}/payment', [PaymentController::class, 'store'])
-        ->name('payments.store');
-});
-
-/*
-|--------------------------------------------------------------------------
-| Réservations et paiements
-|--------------------------------------------------------------------------
-*/
-
-Route::middleware('auth')->group(function () {
+    /*
+    |--------------------------------------------------------------------------
+    | Nouvelle réservation
+    |--------------------------------------------------------------------------
+    */
 
     Route::get('/flights/{flight}/booking', [BookingController::class, 'create'])
         ->name('bookings.create');
@@ -101,6 +110,13 @@ Route::middleware('auth')->group(function () {
     Route::post('/flights/{flight}/booking', [BookingController::class, 'store'])
         ->name('bookings.store');
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | Paiement
+    |--------------------------------------------------------------------------
+    */
+
     Route::get('/bookings/{booking}/payment', [PaymentController::class, 'create'])
         ->name('payments.create');
 
@@ -108,17 +124,26 @@ Route::middleware('auth')->group(function () {
         ->name('payments.store');
 });
 
+
 /*
 |--------------------------------------------------------------------------
-| Retour / annulation PayDunya
+| Retour PayDunya
 |--------------------------------------------------------------------------
 */
 
 Route::get('/payment/return', [PaymentController::class, 'return'])
     ->name('payments.return');
 
+
+/*
+|--------------------------------------------------------------------------
+| Annulation PayDunya
+|--------------------------------------------------------------------------
+*/
+
 Route::get('/payment/cancel', [PaymentController::class, 'cancel'])
     ->name('payments.cancel');
+
 
 /*
 |--------------------------------------------------------------------------
@@ -128,6 +153,7 @@ Route::get('/payment/cancel', [PaymentController::class, 'cancel'])
 
 Route::post('/payment/callback', [PaymentController::class, 'callback'])
     ->name('payments.callback');
+
 
 /*
 |--------------------------------------------------------------------------

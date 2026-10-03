@@ -75,6 +75,14 @@
             border-radius: 8px;
             font-size: 15px;
             width: 100%;
+            background: white;
+        }
+
+        .form-group select:focus,
+        .form-group input:focus {
+            outline: none;
+            border-color: #0f4c81;
+            box-shadow: 0 0 0 3px rgba(15, 76, 129, 0.1);
         }
 
         .search-button {
@@ -274,9 +282,15 @@
 
         .empty {
             background: white;
-            padding: 30px;
+            padding: 40px 30px;
             text-align: center;
             border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .empty-icon {
+            font-size: 45px;
+            margin-bottom: 15px;
         }
 
         .empty h3 {
@@ -293,6 +307,29 @@
             padding: 15px;
             border-radius: 8px;
             margin-bottom: 20px;
+        }
+
+        .errors ul {
+            padding-left: 20px;
+        }
+
+        .field-error {
+            color: #dc2626;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        .back-dashboard {
+            display: inline-block;
+            margin-top: 15px;
+            color: white;
+            text-decoration: none;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .back-dashboard:hover {
+            text-decoration: underline;
         }
 
         @media (max-width: 900px) {
@@ -360,34 +397,43 @@
 <body>
 
 <header>
-    <h1>Yada Voyage</h1>
-    <p>Réservez votre voyage en toute simplicité</p>
+    <h1>✈️ Yada Voyage</h1>
+    <p>Recherchez et réservez votre prochain vol</p>
+
+    @auth
+        <a href="{{ route('dashboard') }}" class="back-dashboard">
+            ← Retour au tableau de bord
+        </a>
+    @endauth
 </header>
 
 <div class="container">
 
+    {{-- Messages d'erreur --}}
     @if ($errors->any())
         <div class="errors">
-            @foreach ($errors->all() as $error)
-                <div>{{ $error }}</div>
-            @endforeach
+            <strong>Veuillez corriger les erreurs suivantes :</strong>
+
+            <ul>
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
         </div>
     @endif
 
-    {{-- ========================= --}}
-    {{-- RECHERCHE --}}
-    {{-- ========================= --}}
-
+    {{-- FORMULAIRE DE RECHERCHE --}}
     <div class="search-box">
 
         <h2>🔎 Rechercher un vol</h2>
 
         <form
-            method="GET"
             action="{{ route('flights.index') }}"
+            method="GET"
             class="search-form"
         >
 
+            {{-- Départ --}}
             <div class="form-group">
                 <label for="departure">
                     Aéroport de départ
@@ -398,22 +444,21 @@
                     id="departure"
                     required
                 >
-                    <option value="">
-                        Choisir un aéroport
-                    </option>
+                    <option value="">Choisir un départ</option>
 
                     @foreach ($airports as $airport)
                         <option
                             value="{{ $airport->code }}"
                             {{ request('departure') == $airport->code ? 'selected' : '' }}
                         >
-                            {{ $airport->city }} -
-                            {{ $airport->code }}
+                            {{ $airport->code }} -
+                            {{ $airport->city }}
                         </option>
                     @endforeach
                 </select>
             </div>
 
+            {{-- Arrivée --}}
             <div class="form-group">
                 <label for="arrival">
                     Aéroport d'arrivée
@@ -424,22 +469,21 @@
                     id="arrival"
                     required
                 >
-                    <option value="">
-                        Choisir un aéroport
-                    </option>
+                    <option value="">Choisir une arrivée</option>
 
                     @foreach ($airports as $airport)
                         <option
                             value="{{ $airport->code }}"
                             {{ request('arrival') == $airport->code ? 'selected' : '' }}
                         >
-                            {{ $airport->city }} -
-                            {{ $airport->code }}
+                            {{ $airport->code }} -
+                            {{ $airport->city }}
                         </option>
                     @endforeach
                 </select>
             </div>
 
+            {{-- Date départ --}}
             <div class="form-group">
                 <label for="departure_date">
                     Date de départ
@@ -450,13 +494,32 @@
                     name="departure_date"
                     id="departure_date"
                     value="{{ request('departure_date') }}"
+                    min="{{ now()->format('Y-m-d') }}"
                     required
                 >
             </div>
 
+            {{-- Nombre de passagers --}}
+            <div class="form-group">
+                <label for="passengers">
+                    Passagers
+                </label>
+
+                <input
+                    type="number"
+                    name="passengers"
+                    id="passengers"
+                    value="{{ request('passengers', 1) }}"
+                    min="1"
+                    max="9"
+                    required
+                >
+            </div>
+
+            {{-- Date retour --}}
             <div class="form-group">
                 <label for="return_date">
-                    Date de retour
+                    Date de retour <span style="font-weight: normal;">(optionnel)</span>
                 </label>
 
                 <input
@@ -464,58 +527,26 @@
                     name="return_date"
                     id="return_date"
                     value="{{ request('return_date') }}"
+                    min="{{ request('departure_date', now()->format('Y-m-d')) }}"
                 >
             </div>
 
-            <div class="form-group">
-                <label for="passengers">
-                    Passagers
-                </label>
-
-                <select
-                    name="passengers"
-                    id="passengers"
-                    required
-                >
-                    @for ($i = 1; $i <= 9; $i++)
-                        <option
-                            value="{{ $i }}"
-                            {{ request('passengers', 1) == $i ? 'selected' : '' }}
-                        >
-                            {{ $i }}
-                            passager{{ $i > 1 ? 's' : '' }}
-                        </option>
-                    @endfor
-                </select>
-            </div>
-
-            <button
-                type="submit"
-                class="search-button"
-            >
-                🔎 Rechercher des vols
+            <button type="submit" class="search-button">
+                🔎 Rechercher les vols
             </button>
 
         </form>
-
     </div>
 
-
-    {{-- ========================= --}}
     {{-- RÉSULTATS --}}
-    {{-- ========================= --}}
-
-    @if (request()->filled([
-        'departure',
-        'arrival',
-        'departure_date'
-    ]))
+    @if (
+        request()->filled('departure') &&
+        request()->filled('arrival') &&
+        request()->filled('departure_date')
+    )
 
         <div class="title">
-
-            <h2>
-                Vols disponibles
-            </h2>
+            <h2>Vols disponibles</h2>
 
             <p>
                 Résultats pour
@@ -526,80 +557,56 @@
                 <strong>
                     {{ \Carbon\Carbon::parse(request('departure_date'))->format('d/m/Y') }}
                 </strong>
-
-                @if (request('passengers'))
-                    — {{ request('passengers') }}
-                    passager{{ request('passengers') > 1 ? 's' : '' }}
-                @endif
             </p>
-
         </div>
 
-
-        @if ($flights->count() > 0)
-
-            <div class="search-info">
-
-                ✈️
-
-                <strong>
-                    {{ $flights->count() }}
-                </strong>
-
-                vol{{ $flights->count() > 1 ? 's' : '' }}
-                disponible{{ $flights->count() > 1 ? 's' : '' }}
-                pour votre recherche.
-
-            </div>
-
-        @endif
-
+        <div class="search-info">
+            ✈️
+            <strong>{{ $flights->count() }}</strong>
+            vol(s) disponible(s)
+            pour
+            <strong>{{ request('passengers', 1) }}</strong>
+            passager(s).
+        </div>
 
         @forelse ($flights as $flight)
 
             <div class="flight-card">
 
-                {{-- EN-TÊTE DU VOL --}}
-
+                {{-- En-tête --}}
                 <div class="flight-header">
 
                     <div>
-
                         <div class="airline">
                             {{ $flight->airline->name }}
                         </div>
 
                         <div class="flight-number">
                             Vol {{ $flight->flight_number }}
-                        </div>
 
+                            @if ($flight->airline->code)
+                                · {{ $flight->airline->code }}
+                            @endif
+                        </div>
                     </div>
 
-
                     @if ($flight->stops == 0)
-
                         <span class="direct">
                             ✓ Vol direct
                         </span>
-
                     @else
-
                         <span class="stops">
                             {{ $flight->stops }}
                             escale{{ $flight->stops > 1 ? 's' : '' }}
                         </span>
-
                     @endif
 
                 </div>
 
-
-                {{-- ITINÉRAIRE --}}
-
+                {{-- Trajet --}}
                 <div class="route">
 
-                    {{-- DÉPART --}}
-
+                    {{-- Départ --}}
                     <div class="airport">
 
                         <strong>
@@ -624,47 +631,43 @@
 
                     </div>
 
-
-                    {{-- DURÉE --}}
-
+                    {{-- Milieu --}}
                     <div class="flight-middle">
 
                         <div class="plane">
                             ✈️
                         </div>
 
-                        <div class="duration">
+                        @if ($flight->duration_minutes)
 
                             @php
-                                $hours = intdiv(
-                                    $flight->duration_minutes,
-                                    60
-                                );
-
+                                $hours = intdiv($flight->duration_minutes, 60);
                                 $minutes = $flight->duration_minutes % 60;
                             @endphp
 
-                            Durée :
+                            <div class="duration">
 
-                            @if ($hours > 0)
-                                {{ $hours }}h
-                            @endif
+                                @if ($hours > 0)
+                                    {{ $hours }}h
+                                @endif
 
-                            @if ($minutes > 0)
-                                {{ $minutes }}min
-                            @endif
+                                @if ($minutes > 0)
+                                    {{ $minutes }}min
+                                @endif
 
-                        </div>
+                            </div>
 
-                        <div>
-                            {{ $flight->stops == 0 ? 'Direct' : $flight->stops . ' escale(s)' }}
-                        </div>
+                        @else
+
+                            <div class="duration">
+                                Durée non renseignée
+                            </div>
+
+                        @endif
 
                     </div>
 
-
-                    {{-- ARRIVÉE --}}
-
+                    {{-- Arrivée --}}
                     <div class="airport arrival">
 
                         <strong>
@@ -691,15 +694,12 @@
 
                 </div>
 
-
-                {{-- INFORMATIONS + PRIX --}}
-
+                {{-- Informations et prix --}}
                 <div class="details">
 
                     <div class="flight-details">
 
                         <div class="detail-item">
-
                             <span class="detail-label">
                                 Compagnie
                             </span>
@@ -707,86 +707,39 @@
                             <span class="detail-value">
                                 {{ $flight->airline->name }}
                             </span>
-
                         </div>
 
-
                         <div class="detail-item">
-
-                            <span class="detail-label">
-                                Numéro de vol
-                            </span>
-
-                            <span class="detail-value">
-                                {{ $flight->flight_number }}
-                            </span>
-
-                        </div>
-
-
-                        <div class="detail-item">
-
-                            <span class="detail-label">
-                                Escales
-                            </span>
-
-                            <span class="detail-value">
-
-                                @if ($flight->stops == 0)
-                                    Direct
-                                @else
-                                    {{ $flight->stops }}
-                                    escale{{ $flight->stops > 1 ? 's' : '' }}
-                                @endif
-
-                            </span>
-
-                        </div>
-
-
-                        <div class="detail-item">
-
                             <span class="detail-label">
                                 Places disponibles
                             </span>
 
                             <span class="detail-value seats">
-                                {{ $flight->available_seats }}
+                                {{ $flight->available_seats }} place(s)
+                            </span>
+                        </div>
+
+                        <div class="detail-item">
+                            <span class="detail-label">
+                                Tarif par passager
                             </span>
 
+                            <span class="price">
+                                {{ number_format($flight->price, 0, ',', ' ') }}
+                                FCFA
+                            </span>
                         </div>
 
                     </div>
 
-
-                    {{-- PRIX + BOUTON --}}
-
+                    {{-- Réserver --}}
                     <div>
 
-                        <div class="price">
-
-                            {{ number_format(
-                                $flight->price,
-                                0,
-                                ',',
-                                ' '
-                            ) }}
-
-                            FCFA
-
-                        </div>
-
-                        <div class="seats">
-                            Places disponibles
-                        </div>
-
-                        <br>
-
                         <a
-                            href="{{ route('bookings.create', $flight->id) }}"
+                            href="{{ route('bookings.create', $flight) }}"
                             class="btn"
                         >
-                            Choisir ce vol
+                            Réserver ce vol →
                         </a>
 
                     </div>
@@ -799,25 +752,34 @@
 
             <div class="empty">
 
+                <div class="empty-icon">
+                    ✈️
+                </div>
+
                 <h3>
-                    Aucun vol trouvé
+                    Aucun vol disponible
                 </h3>
 
                 <p>
                     Aucun vol ne correspond à votre recherche.
+                    Essayez une autre date ou un autre itinéraire.
                 </p>
 
             </div>
 
         @endforelse
 
-
     @else
 
+        {{-- État initial --}}
         <div class="empty">
 
+            <div class="empty-icon">
+                🔎
+            </div>
+
             <h3>
-                Recherchez votre prochain vol ✈️
+                Recherchez votre prochain vol
             </h3>
 
             <p>

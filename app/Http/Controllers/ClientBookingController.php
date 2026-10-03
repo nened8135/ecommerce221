@@ -31,7 +31,7 @@ class ClientBookingController extends Controller
     public function show(Booking $booking)
     {
         // Sécurité :
-        // le client ne peut consulter que ses propres réservations.
+        // le client ne peut voir que ses propres réservations.
         abort_unless(
             $booking->user_id === Auth::id(),
             403
